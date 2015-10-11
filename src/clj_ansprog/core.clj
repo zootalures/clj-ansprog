@@ -1,6 +1,5 @@
 (ns clj-ansprog.core
-  (:require [clojure.java.io :as io])
-  (:import (java.io StringReader BufferedReader InputStream)))
+  (:require [clojure.java.io :as io]))
 
 (defprotocol AspSolver
   (solve [solver p]))
@@ -8,10 +7,8 @@
 (defprotocol Program
   (prog-as-lines [prog]))
 
-
 (defprotocol AnswerSet
   (all-terms [asset]))
-
 
 (defrecord InMemAnswerSet [terms]
   AnswerSet
@@ -34,6 +31,7 @@
   (input->program (.getBytes prog)))
 
 (defn combine-programs
+  "Combine multiple programs into one"
   [progs]
   (reify Program
     (prog-as-lines [_]

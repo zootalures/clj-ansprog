@@ -11,12 +11,31 @@ The tools require that you have *clingo*  (tested with 4.5.2)  installed and on 
 
 # Usage
 
+The library is a fairly course wrapper around the underlying system programs  -
+     it generates answer sets as parsed clojure data structures .
+
+
 ## Solving and parsing answer sets
 
+The  code below shows creating  simple program:
 
-   (def solver (create-clingo-solver))
+    a :- not b.
+    b :- not a.
 
-   (def program ())
+
+        (ns clj-ansprog.example
+            (:require
+              [clj-ansprog.core :as asp]
+              [clj-ansprog.clingo-solver :as clingo]))
+
+        (def solver (clingo/create-clingo-solver {:solver-path "clingo"}))
+
+        (def prog (asp/string->program "a :- not b. \n b :- not a."))
+
+        (map asp/all-terms  (asp/solve solver prog))
+
+        =>
+        ((:a) (:b))
 
 
 ## License
