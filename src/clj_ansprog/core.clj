@@ -4,11 +4,16 @@
 (defprotocol AspSolver
   (solve [solver p]))
 
+(defprotocol Solution
+  (anssets [sln])
+  (kill [_]))
+
 (defprotocol Program
   (prog-as-lines [prog]))
 
 (defprotocol AnswerSet
   (all-terms [asset]))
+
 
 (defrecord InMemAnswerSet [terms]
   AnswerSet
@@ -19,6 +24,29 @@
   Program
   (prog-as-lines [_]
     lines))
+
+(defn term-arity
+  "Return the arity of a term"
+  [t]
+  (when (vector? t)
+    (- (count t) 1)))
+
+(defn term-name
+  "return the name of a term "
+  [t]
+  (first t))
+
+(defn term-filter
+  "Create a term filter predicate base on the name and arity of a terms"
+  ([name]
+   (term-filter name 0))
+  ([name arity]
+   (fn [term]
+     (and
+       (vector? term)
+       (= name (first term))
+       (= arity (term-arity term))))))
+
 
 (defn input->program
   "Construct an answer set program from an input stream, file or byte array"

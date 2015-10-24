@@ -8,17 +8,18 @@
 
 
 (def term-grammar-def
-  "S = LITERAL|ATOM|TERM;
+  "S = ATOM|TERM;
+  P = LITERAL|ATOM|TERM;
   LITERAL = #'-?\\d+(\\.\\d+)?';
   ATOM = #'-?[a-zA-z][\\w_]*';
-  TERM = #'-?[a-zA-z][\\w_]*\\s*\\(\\s*' (S ( <#'\\s*,\\s*'>  S )* )? <#'\\s*\\)'>;
-  ")
+  TERM = #'-?[a-zA-z][\\w_]*\\s*\\(\\s*' (P ( <#'\\s*,\\s*'>  P )* )? <#'\\s*\\)'>;")
 
 (def handler
   {:S identity
+   :P identity
    :LITERAL (fn [v] (read-string v))
    :ATOM (fn [name]
-           (keyword (clojure.string/trim name)))
+           [(keyword (clojure.string/trim name))])
    :TERM (fn [name & args]
            (apply (partial conj [(keyword (clojure.string/replace name #"\s*\(\s*$" ""))]) args))
    })
@@ -29,13 +30,21 @@
 (defn parse-term
   [term]
   "Parses a term into it's clojure form"
-  (insta/transform handler(term-grammar  (clojure.string/trim  term))))
+  (->>
+    term
+    (clojure.string/trim)
+    (term-grammar)
+    (insta/transform handler)))
 
 (defn parse-ansset
   "Parse a single Answer set line into an answer set object"
   [asset]
-  (asp/->InMemAnswerSet
-    (map parse-term (filter  not-empty (clojure.string/split asset #"\s+")))))
+  (->>
+    (clojure.string/split asset  #"\s+")
+    (filter not-empty)
+    (map parse-term)
+    (set)
+    (asp/->InMemAnswerSet)))
 
 
 (defn- lineseq-anssets
@@ -53,14 +62,25 @@
   [prog]
   (conch/let-programs
     [clingo "clingo"]
-    (lineseq-anssets (clingo "-n" "0" {:throw false
-                                       :seq   true
-                                       :in    (api/prog-as-lines prog)}))))
+    (let [result (clingo "-n" "0" {:throw false
+                                   :seq   true
+                                   :in    (api/prog-as-lines prog)
+                                   :verbose true})]
+      {:anssets (lineseq-anssets  (:stdout result) )
+       :proc (:proc result)})))
+
+
+(defrecord ProcessBackedSolution [anssets ^Process proc]
+  asp/Solution
+  (anssets [_]
+    anssets)
+  (kill [_]
+    (.destroy proc)))
 
 (defrecord ClingoSolver [opts]
   asp/AspSolver
   (solve [_ prog]
-    (clingo-solve prog)))
+    (map->ProcessBackedSolution (clingo-solve prog))))
 
 
 (defn create-clingo-solver
