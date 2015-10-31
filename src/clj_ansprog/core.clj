@@ -1,12 +1,28 @@
 (ns clj-ansprog.core
-  (:require [clojure.java.io :as io]))
+  (:require [clojure.java.io :as io]
+            [clojure.core.async :as async :refer [chan go <! <!! >! close!]]))
 
 (defprotocol AspSolver
   (solve [solver p]))
 
 (defprotocol Solution
-  (anssets [sln])
-  (kill [_]))
+  (anssets [_]))
+
+
+(defn- sets-from-chan
+  [channel]
+  (if-let [val (<!! channel ) ]
+    (lazy-seq (cons val (sets-from-chan channel)))))
+
+(defrecord AsyncSolution [anssets-channel]
+  Solution
+  (anssets [_]
+    (sets-from-chan anssets-channel)))
+
+(defrecord MemSolution [seq]
+  Solution
+  (anssets [_]
+    seq))
 
 (defprotocol Program
   (prog-as-lines [prog]))

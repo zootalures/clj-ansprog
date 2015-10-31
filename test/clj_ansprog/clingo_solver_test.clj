@@ -67,8 +67,8 @@
                [engine (create-clingo-solver {})
                 basic-prog (api/->StringProg ["v(1..3)."])]
                (just-anssets (api/solve engine basic-prog)) =>
-               [#{[:v 1] [:v 2] [:v 3]}]))
-      )
+               [#{[:v 1] [:v 2] [:v 3]}])))
+
 
 
 
