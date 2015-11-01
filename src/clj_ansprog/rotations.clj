@@ -1,5 +1,4 @@
-(ns clj-ansprog.rotations
-  )
+(ns clj-ansprog.rotations)
 
 (defn rz
   [[x y z] q]

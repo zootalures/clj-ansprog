@@ -68,9 +68,9 @@
     [clingo "clingo"]
     (let [output (chan)
           result (clingo "-n" "0" {:throw   false
-                                   :seq     true
-                                   :in      (api/prog-as-lines prog)
-                                   :verbose true})]
+                                       :seq     true
+                                       :in      (api/prog-as-lines prog)
+                                       :verbose true})]
       (go
         (try
           (doseq [ansset (lineseq-anssets (:stdout result))]
@@ -87,7 +87,7 @@
 (defrecord ClingoSolver [opts]
   asp/AspSolver
   (solve [_ prog]
-    (api/map->AsyncSolution (clingo-solve prog))))
+    (api/map->AsyncSolution ( clingo-solve prog ))))
 
 (defn create-clingo-solver
   "Create a clingo solver"

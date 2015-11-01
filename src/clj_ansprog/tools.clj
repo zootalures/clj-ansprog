@@ -20,8 +20,8 @@
 
 (defn nest-solutions
   "Tales a solution, "
-  [^Solution solutions]
-  (apply concat (map-indexed #(nest-terms (asp/all-terms %2) %1)  (asp/anssets solutions))))
+  [anssets]
+  (apply concat (map-indexed #(nest-terms (asp/all-terms %2) %1)  anssets)))
 
 (defn parse-input
   [input]
@@ -42,20 +42,20 @@
 
 (defn
   nest-cmd
-  [in out]
-  (->
-    (parse-input in)
-    (nest-solutions)
-    (write-terms-as-prog out)))
+  [sln]
+  (->  (asp/anssets sln)
+       (nest-solutions)))
 
 (defn
   generate-parts-cmd
-  [in out]
-  (as-> (parse-input in) $
-        (asp/anssets $)
+  [sln]
+  (as-> (asp/anssets sln) $
         (map asp/all-terms $)
         (map rot/gen-rotations $)
         (into #{} $)
+        (map first $)
+        (map asp/->InMemAnswerSet $)
+        (nest-solutions $)
         ))
 
 
@@ -63,9 +63,20 @@
   [& args]
   (case (first args)
     "nest"
-    (do (nest-cmd *in* *out*)  0)
+    (do (-> (parse-input *in*)
+            (nest-cmd )
+            (write-terms-as-prog  *out*))
+        0)
     "generateparts" ;generate distinct parts irrspective of roatation
-    (do (generate-parts-cmd *in* *out* ))
+    (do (-> (parse-input *in*)
+            (generate-parts-cmd )
+            (write-terms-as-prog  *out*))
+        0)
+    "generatepartsedn" ;generate distinct parts irrspective of roatation
+    (do (-> (parse-input *in*)
+            (generate-parts-cmd)
+            (prn-str))
+        0)
     (do
       (println "cmd <args> ")
       1)))
