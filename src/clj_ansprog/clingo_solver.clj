@@ -54,7 +54,7 @@
   (lazy-seq
     (if-let [l (first lines)]
       (do
-        (println "handling " l )
+        ;(println "handling " l )
         (if-let [r (next lines)]
           (if (re-find #"Answer: (\d+)" l)
             (cons (parse-ansset (first r)) (lineseq-anssets (rest r)))

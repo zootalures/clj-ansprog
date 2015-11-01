@@ -80,3 +80,14 @@
   (reify Program
     (prog-as-lines [_]
       (reduce concat (map prog-as-lines progs)))))
+
+
+(defn term->str
+  [t]
+  (cond (sequential? t)
+        (str (name (first t))
+             (if (seq (rest t))
+               (str "(" (clojure.string/join "," (map term->str (rest t))) ")")
+               ""))
+        :default t
+        ))
