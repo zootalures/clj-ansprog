@@ -3,7 +3,8 @@
             [clojure.core.async :as async :refer [chan go <! <!! >! close!]]))
 
 (defprotocol AspSolver
-  (solve [solver p]))
+  (solve [solver p]
+    [solver p opts]))
 
 (defprotocol Solution
   (anssets [_]))
@@ -62,6 +63,27 @@
        (vector? term)
        (= name (first term))
        (= arity (term-arity term))))))
+
+
+(defn- seq-up-to
+  "return a sequence which contains all elements up to the first element matching fn "
+  [inseq fn ]
+  (if-let [non-emptyseq (seq inseq)]
+    (if (fn (first non-emptyseq))
+      []
+      (lazy-seq (cons (first non-emptyseq) (seq-up-to (rest non-emptyseq) fn ))))
+    []))
+
+(defn- stage-match-fn
+  [stage]
+  (fn [line]
+    (if-let [[_ s] (re-find #"%stage\s+(\d+)\s*" (str line))]
+      (> (Integer/parseInt s) stage))))
+
+(defn filter-stage
+  [program stage]
+  (->StringProg
+    (seq-up-to (prog-as-lines program)  (stage-match-fn stage))))
 
 
 (defn input->program

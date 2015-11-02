@@ -10,6 +10,4 @@
   :profiles {:dev {:dependencies [[midje "1.7.0"]]}}
   :jvm-opts ["-Xverify:none"]
 
-  :main clj-ansprog.tools
-  :uberjar { :aot [clj-ansprog.tools]}
   )

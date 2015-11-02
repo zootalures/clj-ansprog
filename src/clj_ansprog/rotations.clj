@@ -1,4 +1,6 @@
-(ns clj-ansprog.rotations)
+(ns clj-ansprog.rotations
+  (:require [clj-ansprog.tools :as tools]
+            [clj-ansprog.core :as asp]))
 
 (defn rz
   [[x y z] q]
@@ -32,13 +34,6 @@
                    cleanup
                    ))])
 
-(defn- setify-terms
-  [t]
-  (into #{} t))
-
-(defn unique-pieces
-  [pieces]
-  (into #{} (map (partial map setify-terms)) pieces))
 
 (defn v-diff
   [[ax ay az] [bx by bz]]
@@ -80,4 +75,64 @@
              (for [xr (range 0 4)
                    yr (range 0 4)
                    zr (range 0 4)]
-               (set (normalize-piece ( rotate-piece [xr yr zr] piece)))))))
+               (set (normalize-piece (rotate-piece [xr yr zr] piece)))))))
+
+
+(defn
+  generate-parts-cmd
+  [sln]
+  (as-> (asp/anssets sln) $
+        (map asp/all-terms $)
+        (map gen-rotations $)
+        (into #{} $)
+        (map first $)
+        (map asp/->InMemAnswerSet $)
+        (tools/nest-solutions $)
+        ))
+
+(defn in-range?
+  [x min max]
+  (and (< x max) (>= x min)))
+
+(defn piece-in-box?
+  [parts]
+  (every? (fn [[_ [_ & coord]]]
+            (every? (fn [v] (and (< v 3)  (>= v 0))) coord)) parts))
+
+(defn gen-piece-locations
+  "generate part images  for each possible rotation and translation (excluding duplicates)
+   generates terms of the form: placepart(r(RX,RY,RZ),t(TX,TY,TZ),p(1,0,0)) "
+  [parts]
+  (let [kvs
+        (for [rx (range 0 4)
+              ry (range 0 4)
+              rz (range 0 4)
+              tx (range 0 3)
+              ty (range 0 3)
+              tz (range 0 3)]
+
+          (as-> (rotate-piece [rx ry rz] parts) $
+                (normalize-piece $)
+                (translate-part $ [tx ty tz])
+                (set $)
+                [$ [[:r rx ry rz] [:t tx ty tz]]]))]
+    (as->
+      kvs $
+      (filter (fn [[part _]] (piece-in-box? part)) $)
+      (reduce conj {} $)
+      (map (fn [[piece [rot trn]]]
+             (-> piece
+                 (tools/nest-terms trn)
+                 (tools/nest-terms rot)
+                 (tools/rename-terms :placepart))) $)
+      ;(mapcat identity $)
+      )))
+
+(defn generate-spun-parts-cmd
+  []
+  )
+
+    ;(tools/nest-terms [:r rx ry rz])
+    ;   (tools/nest-terms [:t tx ty tz])
+    ;    (tools/rename-terms :placepart)
+    ;))

@@ -63,14 +63,15 @@
 (defn- clingo-solve
   "Invokes clingo and parses results - returning a channel
     answer set objects"
-  [prog]
+  [prog {:keys [num-solutions]
+         :or   {num-solutions 0}}]
   (conch/let-programs
     [clingo "clingo"]
     (let [output (chan)
-          result (clingo "-n" "0" {:throw   false
-                                       :seq     true
-                                       :in      (api/prog-as-lines prog)
-                                       :verbose true})]
+          result (clingo "-n" (str num-solutions) {:throw   false
+                                                   :seq     true
+                                                   :in      (api/prog-as-lines prog)
+                                                   :verbose true})]
       (go
         (try
           (doseq [ansset (lineseq-anssets (:stdout result))]
@@ -81,13 +82,15 @@
           (finally
             (close! output))))
       {:anssets-channel output
-       :proc    (:proc result)})))
+       :proc            (:proc result)})))
 
 
-(defrecord ClingoSolver [opts]
+(defrecord ClingoSolver [default-opts]
   asp/AspSolver
-  (solve [_ prog]
-    (api/map->AsyncSolution ( clingo-solve prog ))))
+  (solve  [solver prog]
+    (api/solve solver  prog {}))
+  (solve [_ prog sopts]
+      (api/map->AsyncSolution (clingo-solve prog ( merge default-opts sopts)))))
 
 (defn create-clingo-solver
   "Create a clingo solver"
