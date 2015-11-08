@@ -25,6 +25,7 @@
   (map #(Math/round %)   coord))
 
 (defn rotate-part
+  "rotates an element of the form [:part [:p x y z]]"
   [[xr yr zr] [pn [cn px py pz]]]
   [pn (into [cn] (->
                    [px py pz]
@@ -62,11 +63,13 @@
   (translate-part piece (v-diff [0 0 0] (min-corner piece))))
 
 (defn rotate-piece
+  "rotates a piece  of the form [[:part [:p x y z]]]"
+
   [r piece]
   (map (partial rotate-part r) piece))
 
 
-(defn gen-rotations
+(defn  gen-rotations
   "Generates a set of all  rotations for a piece, with each piece normalised to the xyz planes "
   [piece]
 
@@ -101,8 +104,10 @@
 
 (defn gen-piece-locations
   "generate part images  for each possible rotation and translation (excluding duplicates)
-   generates terms of the form: placepart(r(RX,RY,RZ),t(TX,TY,TZ),p(1,0,0)) "
+   generates terms of the form: placepart(r(RX,RY,RZ),t(TX,TY,TZ),p(1,0,0)) for locations within the 3x3 cube
+   Input is in the form of a list of parts   [:part [:p x y z]]"
   [parts]
+  (println "rotating " parts )
   (let [kvs
         (for [rx (range 0 4)
               ry (range 0 4)
